@@ -40,7 +40,10 @@ def download_file(url: str) -> str:
 
 def run_installer(file: str):
     import subprocess
-    return subprocess.call(file)
+    try:
+        return subprocess.call(file)
+    except:
+        return 1
 
 def extract_zipfile(file: str, destination_path: str):
     from zipfile import ZipFile
@@ -67,7 +70,14 @@ def install_tool(download: Download):
         print(f"removing {file}")
         os.remove(file)
 
+def is_user_admin():
+    import ctypes
+    return ctypes.windll.shell32.IsUserAnAdmin() == 1
+
 def __main__():
+    if is_user_admin():
+        print("Must be run as administrator!")
+        return
     parser = argparse.ArgumentParser(
         prog="QuickInstaller",
         description="Concurrent downloader and installer for batch installing programs",
@@ -76,7 +86,7 @@ def __main__():
     parser.add_argument('-j', '--jobs', default=5)
     args = parser.parse_args()
 
-    filename = args.filename
+    filename = args.file
     with open(filename, 'br') as file:
         download_info = tomllib.load(file)
     downloads = [Download(name=download.replace("_", " "), **download_info[download]) for download in download_info]
